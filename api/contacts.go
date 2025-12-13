@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"resume-backend/dto"
-	hutils hutils "resume-backend/pkg/handler"
+	hutils "resume-backend/pkg/handler"
 	"resume-backend/pkg/service"
 )
 

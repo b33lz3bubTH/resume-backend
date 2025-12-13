@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	hutils hutils "resume-backend/pkg/handler"
+	hutils "resume-backend/pkg/handler"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
