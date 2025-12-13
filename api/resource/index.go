@@ -8,6 +8,22 @@ import (
 	"resume-backend/pkg/service"
 )
 
+// ResourceType represents the type of resource being accessed
+type ResourceType string
+
+const (
+	ResourceTypeBootcamp ResourceType = "bootcamps"
+	ResourceTypeJournal  ResourceType = "journal"
+	ResourceTypeMeme     ResourceType = "memes"
+	ResourceTypeCategory ResourceType = "categories"
+)
+
+// isValidResourceType checks if the resource type is valid
+func isValidResourceType(rt ResourceType) bool {
+	return rt == ResourceTypeBootcamp || rt == ResourceTypeJournal ||
+		rt == ResourceTypeMeme || rt == ResourceTypeCategory
+}
+
 // Handler is the unified resource handler that dispatches requests based on resource type
 func Handler(w http.ResponseWriter, r *http.Request) {
 	if hutils.HandleCORS(w, r) {
