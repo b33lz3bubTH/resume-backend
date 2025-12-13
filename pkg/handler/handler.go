@@ -11,23 +11,23 @@ import (
 	"resume-backend/pkg/service"
 )
 
-func setCORS(w http.ResponseWriter) {
+func SetCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 }
 
-func writeJSON(w http.ResponseWriter, status int, data interface{}) {
+func WriteJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
 }
 
-func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, map[string]string{"error": message})
+func WriteError(w http.ResponseWriter, status int, message string) {
+	WriteJSON(w, status, map[string]string{"error": message})
 }
 
-func checkAuth(r *http.Request) bool {
+func CheckAuth(r *http.Request) bool {
 	cfg := config.Load()
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
@@ -40,12 +40,12 @@ func checkAuth(r *http.Request) bool {
 	return parts[1] == cfg.RootKey
 }
 
-func getDB() (*database.DB, error) {
+func GetDB() (*database.DB, error) {
 	cfg := config.Load()
 	return database.NewDB(cfg.DatabaseURL)
 }
 
-func getServices(db *database.DB) (*service.BootcampService, *service.JournalService, *service.MemeService, *service.StoryService, *service.ContactService) {
+func GetServices(db *database.DB) (*service.BootcampService, *service.JournalService, *service.MemeService, *service.StoryService, *service.ContactService) {
 	return service.NewBootcampService(db),
 		service.NewJournalService(db),
 		service.NewMemeService(db),
@@ -53,8 +53,8 @@ func getServices(db *database.DB) (*service.BootcampService, *service.JournalSer
 		service.NewContactService(db)
 }
 
-func handleCORS(w http.ResponseWriter, r *http.Request) bool {
-	setCORS(w)
+func HandleCORS(w http.ResponseWriter, r *http.Request) bool {
+	SetCORS(w)
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return true
@@ -62,14 +62,14 @@ func handleCORS(w http.ResponseWriter, r *http.Request) bool {
 	return false
 }
 
-func validateRequest(w http.ResponseWriter, r *http.Request, req interface{}) bool {
+func ValidateRequest(w http.ResponseWriter, r *http.Request, req interface{}) bool {
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid request body")
+		WriteError(w, http.StatusBadRequest, "Invalid request body")
 		return false
 	}
 
 	if errors := middleware.ValidateStruct(req); len(errors) > 0 {
-		writeJSON(w, http.StatusBadRequest, map[string]interface{}{
+		WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"error":  "Validation failed",
 			"errors": errors,
 		})
@@ -78,7 +78,7 @@ func validateRequest(w http.ResponseWriter, r *http.Request, req interface{}) bo
 	return true
 }
 
-func getIDFromPath(r *http.Request) string {
+func GetIDFromPath(r *http.Request) string {
 	path := strings.TrimPrefix(r.URL.Path, "/api/")
 	parts := strings.Split(path, "/")
 	if len(parts) > 0 {
@@ -93,11 +93,11 @@ func getIDFromPath(r *http.Request) string {
 	return ""
 }
 
-func handleError(w http.ResponseWriter, err error) {
+func HandleError(w http.ResponseWriter, err error) {
 	if strings.Contains(err.Error(), "not found") {
-		writeError(w, http.StatusNotFound, err.Error())
+		WriteError(w, http.StatusNotFound, err.Error())
 	} else {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
 

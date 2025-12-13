@@ -4,28 +4,29 @@ import (
 	"net/http"
 
 	"resume-backend/dto"
+	hutils "resume-backend/pkg/handler"
 	"resume-backend/pkg/service"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	if handleCORS(w, r) {
+	if hutils.HandleCORS(w, r) {
 		return
 	}
 
-	id := getIDFromPath(r)
+	id := hutils.GetIDFromPath(r)
 	if id == "" {
-		writeError(w, http.StatusBadRequest, "ID is required")
+		hutils.WriteError(w, http.StatusBadRequest, "ID is required")
 		return
 	}
 
-	db, err := getDB()
+	db, err := hutils.GetDB()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "Database connection failed")
+		hutils.WriteError(w, http.StatusInternalServerError, "Database connection failed")
 		return
 	}
 	defer db.Close()
 
-	bootcampService, _, _, _, _ := getServices(db)
+	bootcampService, _, _, _, _ := hutils.GetServices(db)
 
 	switch r.Method {
 	case http.MethodGet:
@@ -35,49 +36,49 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		deleteBootcamp(w, r, id, bootcampService)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		hutils.WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 
 func getBootcampByID(w http.ResponseWriter, r *http.Request, id string, bootcampService *service.BootcampService) {
 	bootcamp, err := bootcampService.GetByID(id)
 	if err != nil {
-		handleError(w, err)
+		hutils.HandleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, bootcamp)
+	hutils.WriteJSON(w, http.StatusOK, bootcamp)
 }
 
 func updateBootcamp(w http.ResponseWriter, r *http.Request, id string, bootcampService *service.BootcampService) {
-	if !checkAuth(r) {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
+	if !hutils.CheckAuth(r) {
+		hutils.WriteError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	var req dto.UpdateBootcampRequest
-	if !validateRequest(w, r, &req) {
+	if !hutils.ValidateRequest(w, r, &req) {
 		return
 	}
 
 	bootcamp, err := bootcampService.Update(id, req)
 	if err != nil {
-		handleError(w, err)
+		hutils.HandleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, bootcamp)
+	hutils.WriteJSON(w, http.StatusOK, bootcamp)
 }
 
 func deleteBootcamp(w http.ResponseWriter, r *http.Request, id string, bootcampService *service.BootcampService) {
-	if !checkAuth(r) {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
+	if !hutils.CheckAuth(r) {
+		hutils.WriteError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	if err := bootcampService.Delete(id); err != nil {
-		handleError(w, err)
+		hutils.HandleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"message": "Bootcamp deleted successfully"})
+	hutils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Bootcamp deleted successfully"})
 }

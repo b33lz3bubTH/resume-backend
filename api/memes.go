@@ -4,47 +4,48 @@ import (
 	"net/http"
 
 	"resume-backend/dto"
+	hutils "resume-backend/pkg/handler"
 	"resume-backend/pkg/service"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	if handleCORS(w, r) {
+	if hutils.HandleCORS(w, r) {
 		return
 	}
 
-	db, err := getDB()
+	db, err := hutils.GetDB()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "Database connection failed")
+		hutils.WriteError(w, http.StatusInternalServerError, "Database connection failed")
 		return
 	}
 	defer db.Close()
 
-	_, _, memeService, _, _ := getServices(db)
+	_, _, memeService, _, _ := hutils.GetServices(db)
 
 	switch r.Method {
 	case http.MethodPost:
 		createMeme(w, r, memeService)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		hutils.WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 
 func createMeme(w http.ResponseWriter, r *http.Request, memeService *service.MemeService) {
-	if !checkAuth(r) {
-		writeError(w, http.StatusUnauthorized, "Unauthorized")
+	if !hutils.CheckAuth(r) {
+		hutils.WriteError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	var req dto.CreateMemeRequest
-	if !validateRequest(w, r, &req) {
+	if !hutils.ValidateRequest(w, r, &req) {
 		return
 	}
 
 	meme, err := memeService.CreateMeme(req)
 	if err != nil {
-		handleError(w, err)
+		hutils.HandleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, meme)
+	hutils.WriteJSON(w, http.StatusCreated, meme)
 }
