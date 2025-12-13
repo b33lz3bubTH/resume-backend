@@ -1,3 +1,11 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "routes": [
+    { "src": "/api/memes/categories/(?<id>[^/]+)$", "dest": "/api/memes/categories/id?id=$id" },
+    { "src": "/api/memes/(?<id>[^/]+)$", "dest": "/api/memes/id?id=$id" },
+    { "src": "/api/bootcamps/(?<id>[^/]+)$", "dest": "/api/bootcamps/id?id=$id" },
+    { "src": "/api/journal/(?<id>[^/]+)$", "dest": "/api/journal/id?id=$id" },
+    { "src": "/api/stories/(?<id>[^/]+)$", "dest": "/api/stories/id?id=$id" },
+    { "src": "/api/contacts/(?<id>[^/]+)$", "dest": "/api/contacts/id?id=$id" }
+  ]
 }

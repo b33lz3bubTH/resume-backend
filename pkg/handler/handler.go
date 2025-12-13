@@ -79,6 +79,12 @@ func ValidateRequest(w http.ResponseWriter, r *http.Request, req interface{}) bo
 }
 
 func GetIDFromPath(r *http.Request) string {
+	// Prefer explicit query param when present (used by Vercel rewrites)
+	if q := r.URL.Query().Get("id"); q != "" {
+		return q
+	}
+
+	// Fallback to parsing from the path for direct hits
 	path := strings.TrimPrefix(r.URL.Path, "/api/")
 	parts := strings.Split(path, "/")
 	if len(parts) > 0 {
