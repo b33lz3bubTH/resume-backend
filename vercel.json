@@ -1,7 +1,45 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "routes": [
-    { "src": "/api/stories/(?<id>[^/]+)$", "dest": "/api/stories/id?id=$id" },
-    { "src": "/api/contacts/(?<id>[^/]+)$", "dest": "/api/contacts/id?id=$id" }
+    {
+      "src": "/api/bootcamps$",
+      "dest": "/api/resource?resource=bootcamps"
+    },
+    {
+      "src": "/api/bootcamps/(?<id>[^/]+)$",
+      "dest": "/api/resource/id?id=$id&resource=bootcamps"
+    },
+    {
+      "src": "/api/journal$",
+      "dest": "/api/resource?resource=journal"
+    },
+    {
+      "src": "/api/journal/(?<id>[^/]+)$",
+      "dest": "/api/resource/id?id=$id&resource=journal"
+    },
+    {
+      "src": "/api/memes$",
+      "dest": "/api/resource?resource=memes"
+    },
+    {
+      "src": "/api/memes/(?<id>[^/]+)$",
+      "dest": "/api/resource/id?id=$id&resource=memes"
+    },
+    {
+      "src": "/api/memes/categories$",
+      "dest": "/api/resource?resource=categories"
+    },
+    {
+      "src": "/api/memes/categories/(?<id>[^/]+)$",
+      "dest": "/api/resource/id?id=$id&resource=categories"
+    },
+    {
+      "src": "/api/stories/(?<id>[^/]+)$",
+      "dest": "/api/stories/id?id=$id"
+    },
+    {
+      "src": "/api/contacts/(?<id>[^/]+)$",
+      "dest": "/api/contacts/id?id=$id"
+    }
   ]
 }
