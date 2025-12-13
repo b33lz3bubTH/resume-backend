@@ -1,0 +1,3 @@
+> This repository demonstrates a simple but very effective pattern to build unlimited serverless functions under a single Vercel resource using Go. Instead of creating one serverless function per route, we multiplex all routes through a single HTTP handler. This keeps deployments clean, avoids function sprawl, and works perfectly with Vercel’s Go runtime.
+
+> This approach is production‑friendly, easy to reason about, and cheap.

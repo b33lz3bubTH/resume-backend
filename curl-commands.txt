@@ -1,3 +1,6 @@
+# example
+# deployed backend: https://resume-backend-dusky.vercel.app/api/resource?resource=journal
+
 # ============================================
 # BOOTCAMP ENDPOINTS (via unified resource handler)
 # ============================================
