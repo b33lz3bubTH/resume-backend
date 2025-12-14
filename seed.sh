@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Seed script for populating the database with initial data
+# Uses the same endpoint structure as the frontend API:
+# - /api/bootcamps, /api/journal, /api/memes, /api/memes/categories, /api/stories
+# These endpoints are routed to the unified resource handler via vercel.json
+
 BASE_URL="http://localhost:8080"
 ROOT_KEY="abcd123"
 
