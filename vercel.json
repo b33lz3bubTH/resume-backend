@@ -40,6 +40,18 @@
     {
       "src": "/api/contacts/(?<id>[^/]+)$",
       "dest": "/api/contacts/id?id=$id"
+    },
+    {
+      "src": "/api/chat$",
+      "dest": "/api/chat"
+    },
+    {
+      "src": "/api/openrouter$",
+      "dest": "/api/resource?resource=openrouter"
+    },
+    {
+      "src": "/api_parked/openrouter$",
+      "dest": "/api_parked/openrouter"
     }
   ]
 }

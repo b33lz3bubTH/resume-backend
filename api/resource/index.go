@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"io"
 	"net/http"
 
 	"resume-backend/dto"
@@ -12,16 +13,18 @@ import (
 type ResourceType string
 
 const (
-	ResourceTypeBootcamp ResourceType = "bootcamps"
-	ResourceTypeJournal  ResourceType = "journal"
-	ResourceTypeMeme     ResourceType = "memes"
-	ResourceTypeCategory ResourceType = "categories"
+	ResourceTypeBootcamp  ResourceType = "bootcamps"
+	ResourceTypeJournal   ResourceType = "journal"
+	ResourceTypeMeme      ResourceType = "memes"
+	ResourceTypeCategory  ResourceType = "categories"
+	ResourceTypeOpenRouter ResourceType = "openrouter"
 )
 
 // isValidResourceType checks if the resource type is valid
 func isValidResourceType(rt ResourceType) bool {
 	return rt == ResourceTypeBootcamp || rt == ResourceTypeJournal ||
-		rt == ResourceTypeMeme || rt == ResourceTypeCategory
+		rt == ResourceTypeMeme || rt == ResourceTypeCategory ||
+		rt == ResourceTypeOpenRouter
 }
 
 // Handler is the unified resource handler that dispatches requests based on resource type
@@ -33,13 +36,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// Get resource type from query parameter
 	resourceType := ResourceType(r.URL.Query().Get("resource"))
 	if resourceType == "" {
-		hutils.WriteError(w, http.StatusBadRequest, "resource parameter is required. Valid values: bootcamps, journal, memes, categories")
+		hutils.WriteError(w, http.StatusBadRequest, "resource parameter is required. Valid values: bootcamps, journal, memes, categories, openrouter")
 		return
 	}
 
 	// Validate resource type
 	if !isValidResourceType(resourceType) {
-		hutils.WriteError(w, http.StatusBadRequest, "invalid resource type. Valid values: bootcamps, journal, memes, categories")
+		hutils.WriteError(w, http.StatusBadRequest, "invalid resource type. Valid values: bootcamps, journal, memes, categories, openrouter")
+		return
+	}
+
+	// Handle OpenRouter separately (doesn't need database)
+	if resourceType == ResourceTypeOpenRouter {
+		handleOpenRouter(w, r)
 		return
 	}
 
@@ -224,5 +233,31 @@ func createCategory(w http.ResponseWriter, r *http.Request, memeService *service
 	}
 
 	hutils.WriteJSON(w, http.StatusCreated, category)
+}
+
+// OpenRouter handler
+func handleOpenRouter(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		hutils.WriteError(w, http.StatusMethodNotAllowed, "Method not allowed. Only POST is supported")
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		hutils.WriteError(w, http.StatusBadRequest, "Failed to read request body")
+		return
+	}
+	defer r.Body.Close()
+
+	openRouterService := service.NewOpenRouterService()
+	response, statusCode, err := openRouterService.CreateChatCompletion(body, r.Header.Get("Referer"))
+	if err != nil {
+		hutils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	hutils.WriteJSON(w, statusCode, response)
 }
 
