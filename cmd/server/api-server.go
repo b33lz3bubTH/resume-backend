@@ -39,6 +39,8 @@ func main() {
 	memeService := service.NewMemeService(db)
 	storyService := service.NewStoryService(db)
 	contactService := service.NewContactService(db)
+	chatService := service.NewChatService(db)
+	openRouterService := service.NewOpenRouterService()
 
 	api := e.Group("/api")
 
@@ -481,6 +483,81 @@ func main() {
 		}
 		return c.JSON(http.StatusOK, map[string]string{"message": "Contact deleted successfully"})
 	}, rootKeyAuth)
+
+	api.POST("/chat", func(c echo.Context) error {
+		var req dto.ChatRequest
+		if err := c.Bind(&req); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+		}
+		if req.Message == "" || req.SessionID == "" {
+			return echo.NewHTTPError(http.StatusBadRequest, "message and session_id are required")
+		}
+
+		session, err := chatService.GetOrCreateSession(req.SessionID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get or create session: "+err.Error())
+		}
+
+		lastMessages, err := chatService.GetLastMessages(session.ID, 5)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get last messages: "+err.Error())
+		}
+
+		_, err = chatService.SaveMessage(session.ID, "user", req.Message, nil)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save user message: "+err.Error())
+		}
+
+		model := cfg.OpenRouterModel
+		response, statusCode, err := openRouterService.CreateChatCompletionWithContext(
+			lastMessages,
+			req.Message,
+			model,
+			c.Request().Header.Get("Referer"),
+		)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		if statusCode != http.StatusOK {
+			return c.JSON(statusCode, response)
+		}
+
+		choices, ok := response["choices"].([]interface{})
+		if !ok || len(choices) == 0 {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Invalid response from OpenRouter")
+		}
+
+		choice, ok := choices[0].(map[string]interface{})
+		if !ok {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Invalid response format")
+		}
+
+		message, ok := choice["message"].(map[string]interface{})
+		if !ok {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Invalid message format")
+		}
+
+		content, ok := message["content"].(string)
+		if !ok {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Invalid content format")
+		}
+
+		reasoningDetails, _ := message["reasoning_details"]
+
+		assistantMessageID, err := chatService.SaveMessage(session.ID, "assistant", content, reasoningDetails)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save assistant message: "+err.Error())
+		}
+
+		chatResponse := dto.ChatResponse{
+			Answer:    content,
+			SessionID: session.ID,
+			MessageID: assistantMessageID,
+		}
+
+		return c.JSON(http.StatusOK, chatResponse)
+	})
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.String(200, "OK")

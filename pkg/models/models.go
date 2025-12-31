@@ -82,3 +82,18 @@ type Contact struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type ChatSession struct {
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type ChatMessage struct {
+	ID              string    `json:"id"`
+	SessionID       string    `json:"session_id"`
+	Role            string    `json:"role"`
+	Content         string    `json:"content"`
+	ReasoningDetails *string   `json:"reasoning_details,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+

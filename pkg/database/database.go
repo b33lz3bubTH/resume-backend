@@ -15,17 +15,27 @@ type DB struct {
 }
 
 func NewDB(databaseURL string) (*DB, error) {
+	log.Printf("DEBUG: Original database URL: %s", databaseURL)
+	
 	// Resolve hostname to IPv4 to avoid IPv6 issues
 	databaseURL = resolveToIPv4(databaseURL)
 	
+	log.Printf("DEBUG: Resolved database URL: %s", databaseURL)
+	
 	conn, err := sql.Open("postgres", databaseURL)
 	if err != nil {
+		log.Printf("ERROR: Failed to open database connection: %v", err)
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
+	log.Printf("DEBUG: Attempting to ping database...")
 	if err := conn.Ping(); err != nil {
+		log.Printf("ERROR: Database ping failed: %v", err)
+		log.Printf("DEBUG: Connection string used (password visible): %s", databaseURL)
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
+	
+	log.Printf("DEBUG: Database connection successful!")
 
 	db := &DB{conn: conn}
 	if err := db.migrate(); err != nil {
@@ -100,6 +110,7 @@ func (d *DB) migrate() error {
 		memeSchema,
 		storySchema,
 		contactSchema,
+		chatSchema,
 	}
 
 	for _, schema := range schemas {
@@ -203,5 +214,26 @@ CREATE TABLE IF NOT EXISTS contacts (
     subject TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+`
+
+const chatSchema = `
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id TEXT PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    reasoning_details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages(created_at DESC);
 `
 
